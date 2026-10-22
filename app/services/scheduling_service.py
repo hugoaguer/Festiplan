@@ -3,6 +3,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from app.application.ports.concert_repository_port import ConcertRepositoryPort
 from app.models import Artist, Concert, Festival, Stage
 from app.repositories.concert_repository import ConcertRepository
 from app.services.notification_service import NotificationService
@@ -14,10 +15,18 @@ logger = logging.getLogger(__name__)
 
 class SchedulingService:
 
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        repo: ConcertRepositoryPort | None = None,
+        notifications: NotificationService | None = None
+    ):
         self.db = db
-        self.repo = ConcertRepository(db)
-        self.notifications = NotificationService()
+        self.repo = repo if repo is not None else ConcertRepository(db)
+        self.notifications = (
+            notifications if notifications is not None
+            else NotificationService()
+        )
 
     # Récupérer tous les concerts d'un festival
     def list_concerts(self, festival_id):
@@ -56,14 +65,7 @@ class SchedulingService:
         end_time,
         exclude_id=None
     ):
-        concerts = (
-            self.db.query(Concert)
-            .filter(
-                Concert.festival_id == festival_id,
-                Concert.status != "cancelled"
-            )
-            .all()
-        )
+        concerts = self.repo.list_for_festival(festival_id)
 
         for concert in concerts:
             if exclude_id is not None and concert.id == exclude_id:
@@ -169,7 +171,6 @@ class SchedulingService:
     # Créer un concert
     def create_concert(self, payload):
 
-        # Empêcher la création après publication
         self._check_planning_status(payload.festival_id)
 
         self._validate_concert(
@@ -198,7 +199,6 @@ class SchedulingService:
         if concert is None:
             return None
 
-        # Empêcher la modification d'un planning publié
         self._check_planning_status(concert.festival_id)
 
         if concert.status == "cancelled":
@@ -206,7 +206,6 @@ class SchedulingService:
                 "Impossible de déplacer un concert annulé"
             )
 
-        # Vérifier toutes les règles métier
         self._validate_concert(
             concert.festival_id,
             concert.artist_id,
@@ -216,15 +215,12 @@ class SchedulingService:
             exclude_id=concert.id
         )
 
-        # Modifier les horaires
         concert.start_time = payload.start_time
         concert.end_time = payload.end_time
 
-        # Enregistrer en base
         self.db.commit()
         self.db.refresh(concert)
 
-        # Gérer l'échec éventuel de notification
         try:
             self.notifications.notify_schedule_change(
                 concert.id,
@@ -246,7 +242,6 @@ class SchedulingService:
         if concert is None:
             return None
 
-        # Empêcher l'annulation après publication
         self._check_planning_status(concert.festival_id)
 
         if concert.status == "cancelled":
