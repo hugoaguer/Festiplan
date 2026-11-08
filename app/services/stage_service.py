@@ -1,14 +1,34 @@
-from sqlalchemy.orm import Session
-from app.models import Festival, Stage
-from app.repositories.stage_repository import StageRepository
+from app.domain.scheduling import validate_capacity
+from app.domain.entities import Stage
+from app.ports import FestivalRepository, StageRepository
+
 
 class StageService:
-    def __init__(self, db: Session): self.db=db; self.repo=StageRepository(db)
+    def __init__(
+        self, stages: StageRepository, festivals: FestivalRepository
+    ) -> None:
+        self.stages = stages
+        self.festivals = festivals
 
-    def list_stages(self, festival_id): 
-        return self.repo.list_for_festival(festival_id)
+    def list_stages(self, festival_id: int) -> list[Stage]:
+        return list(self.stages.list_for_festival(festival_id))
 
-    def create_stage(self, payload):
-        if self.db.query(Festival).filter(Festival.id==payload.festival_id).first() is None:
+    def create_stage(
+        self,
+        festival_id: int,
+        name: str,
+        capacity: int,
+        available_equipment: list[str],
+    ) -> Stage:
+        validate_capacity(capacity)
+        if self.festivals.get(festival_id) is None:
             raise ValueError("Festival introuvable")
-        return self.repo.create(Stage(festival_id=payload.festival_id,name=payload.name,capacity=payload.capacity,available_equipment=",".join(payload.available_equipment)))
+        return self.stages.create(
+            Stage(
+                None,
+                festival_id,
+                name,
+                capacity,
+                ",".join(available_equipment),
+            )
+        )

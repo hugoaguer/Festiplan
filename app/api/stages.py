@@ -1,25 +1,45 @@
-from fastapi import APIRouter,Depends,HTTPException
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.schemas import StageCreate,StageRead
-from app.services.stage_service import StageService
-router=APIRouter(prefix="/stages",tags=["stages"])
-def out(s): 
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.application_ports import StageUseCases
+from app.composition import get_stage_service
+from app.domain.entities import Stage
+from app.schemas import StageCreate, StageRead
+
+router = APIRouter(prefix="/stages", tags=["stages"])
+
+
+def _output(stage: Stage) -> dict:
     return {
-        "id":s.id,
-        "festival_id":s.festival_id,
-        "name":s.name,
-        "capacity":s.capacity,
-        "available_equipment":[x for x in s.available_equipment.split(",") if x]
+        "id": stage.id,
+        "festival_id": stage.festival_id,
+        "name": stage.name,
+        "capacity": stage.capacity,
+        "available_equipment": [
+            item for item in stage.available_equipment.split(",") if item
+        ],
     }
 
-@router.get("",response_model=list[StageRead])
-def list_stages(festival_id:int,db:Session=Depends(get_db)): 
-    return [out(s) for s in StageService(db).list_stages(festival_id)]
 
-@router.post("",response_model=StageRead,status_code=201)
-def create_stage(payload:StageCreate,db:Session=Depends(get_db)):
+@router.get("", response_model=list[StageRead])
+def list_stages(
+    festival_id: int,
+    service: StageUseCases = Depends(get_stage_service),
+):
+    return [_output(stage) for stage in service.list_stages(festival_id)]
+
+
+@router.post("", response_model=StageRead, status_code=201)
+def create_stage(
+    payload: StageCreate,
+    service: StageUseCases = Depends(get_stage_service),
+):
     try:
-        return out(StageService(db).create_stage(payload))
+        stage = service.create_stage(
+            payload.festival_id,
+            payload.name,
+            payload.capacity,
+            payload.available_equipment,
+        )
     except ValueError as exc:
-        raise HTTPException(status_code=400,detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _output(stage)

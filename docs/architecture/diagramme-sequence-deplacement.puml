@@ -1,0 +1,44 @@
+@startuml FestiPlanReschedule
+title FestiPlan - déplacer un concert
+autonumber
+
+actor Client
+participant "Route HTTP" as api
+participant "Cas d'utilisation" as app
+participant "Port de persistance" as repository
+database "Base de données" as db
+participant "Port de notification" as notification
+
+Client -> api : Demander le déplacement
+api -> app : Déplacer(concert, créneau)
+app -> repository : Charger et vérifier les données
+repository -> db : Lire
+db --> repository : Données
+repository --> app : Données métier
+
+alt Concert absent
+  app --> api : Introuvable
+  api --> Client : 404
+else Concert présent
+  app -> app : Vérifier les règles métier
+  alt Règle invalide ou planning publié
+    app --> api : Refus métier
+    api --> Client : 400
+  else Déplacement valide
+    app -> repository : Enregistrer le nouveau créneau
+    repository -> db : Sauvegarder
+    db --> repository : Succès
+    repository --> app : Déplacement persisté
+    app -> notification : Envoyer la notification
+    alt Notification envoyée
+      notification --> app : Succès
+      app --> api : Déplacement réussi
+      api --> Client : 200 — notification envoyée
+    else Échec de notification
+      notification --> app : Échec
+      app --> api : Déplacement conservé
+      api --> Client : 200 — notification échouée
+    end
+  end
+end
+@enduml

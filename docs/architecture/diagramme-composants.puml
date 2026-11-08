@@ -1,0 +1,28 @@
+@startuml FestiPlanComponents
+title FestiPlan - architecture hexagonale
+left to right direction
+skinparam componentStyle uml2
+
+actor Client
+component "Routes FastAPI" as api
+interface "Ports entrants" as inbound
+component "Cas d'utilisation" as app
+component "Domaine\n(entités + règles)" as domain
+interface "Ports sortants\n(repositories + notification)" as outbound
+component "Adaptateurs\nSQLAlchemy + notification" as adapters
+database "SQLite" as db
+component "Composition" as wiring
+
+Client --> api
+api --> inbound
+inbound <|.. app
+app --> domain
+app --> outbound
+outbound <|.. adapters
+adapters --> db
+wiring ..> app : injecte les adaptateurs
+
+note bottom
+  Les couches métier ne dépendent pas des technologies.
+end note
+@enduml

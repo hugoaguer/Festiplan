@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+from app.domain.entities import FestivalStatus
 
 class Festival(Base):
     __tablename__="festivals"
@@ -10,7 +11,9 @@ class Festival(Base):
     location: Mapped[str]=mapped_column(String(120),nullable=False)
     start_date: Mapped[datetime]=mapped_column(DateTime,nullable=False)
     end_date: Mapped[datetime]=mapped_column(DateTime,nullable=False)
-    status: Mapped[str]=mapped_column(String(30),default="preparation",nullable=False)
+    status: Mapped[str]=mapped_column(
+        String(30), default=FestivalStatus.PREPARATION.value, nullable=False
+    )
     stages=relationship("Stage",back_populates="festival")
     concerts=relationship("Concert",back_populates="festival")
 

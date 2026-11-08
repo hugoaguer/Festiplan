@@ -1,13 +1,17 @@
-from sqlalchemy.orm import Session
-from app.models import Artist
-from app.repositories.artist_repository import ArtistRepository
+from app.domain.entities import Artist
+from app.ports import ArtistRepository
+
 
 class ArtistService:
-    def __init__(self, db: Session):
-        self.db=db; self.repo=ArtistRepository(db)
-    
-    def list_artists(self):
-        return self.repo.list()
-    
-    def create_artist(self, payload):
-        return self.repo.create(Artist(name=payload.name,genre=payload.genre,required_equipment=",".join(payload.required_equipment)))
+    def __init__(self, artists: ArtistRepository) -> None:
+        self.artists = artists
+
+    def list_artists(self) -> list[Artist]:
+        return list(self.artists.list())
+
+    def create_artist(
+        self, name: str, genre: str, required_equipment: list[str]
+    ) -> Artist:
+        return self.artists.create(
+            Artist(None, name, genre, ",".join(required_equipment))
+        )

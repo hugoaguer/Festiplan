@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
+from app.domain.entities import FestivalStatus
 
 class FestivalCreate(BaseModel):
     name: str=Field(min_length=2,max_length=120)
@@ -9,7 +10,7 @@ class FestivalCreate(BaseModel):
 
 class FestivalRead(FestivalCreate):
     id:int
-    status:str
+    status:FestivalStatus
     model_config=ConfigDict(from_attributes=True)
 
 class ArtistCreate(BaseModel):
@@ -41,7 +42,7 @@ class ConcertRead(BaseModel):
 
 class IncidentCreate(BaseModel):
     concert_id:int
-    description:str=Field(min_length=3,max_length=2000)
+    description:str=Field(min_length=1,max_length=2000)
     occurred_at:datetime|None=None
 
 class IncidentRead(BaseModel):
