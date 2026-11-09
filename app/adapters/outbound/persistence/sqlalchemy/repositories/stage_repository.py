@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import Stage
+from app.adapters.outbound.persistence.sqlalchemy.models import Stage
 from app.application.ports.outbound.stage_repository_port import StageRepositoryPort
 
 

@@ -1,9 +1,22 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.schemas import IncidentCreate, IncidentRead
-from app.services.incident_service import IncidentService
-from app.api.dependencies import get_incident_service
+from app.adapters.inbound.web.schemas.schemas import (
+    IncidentCreate,
+    IncidentRead,
+)
+
+from app.application.use_cases.report_incident import (
+    ReportIncidentUseCase,
+)
+from app.application.queries.list_incidents import (
+    ListIncidentsQuery,
+)
+
+from app.bootstrap.container import (
+    get_report_incident_use_case,
+    get_list_incidents_query,
+)
 
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -12,14 +25,17 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 @router.post("", response_model=IncidentRead, status_code=201)
 def create_incident(
     payload: IncidentCreate,
-    service: IncidentService = Depends(get_incident_service),
+    use_case: ReportIncidentUseCase = Depends(
+        get_report_incident_use_case
+    ),
 ):
     try:
-        return service.create_incident(
+        return use_case.execute(
             concert_id=payload.concert_id,
             description=payload.description,
             occurred_at=payload.occurred_at,
         )
+
     except ValueError as exc:
         raise HTTPException(
             status_code=404,
@@ -30,6 +46,8 @@ def create_incident(
 @router.get("", response_model=list[IncidentRead])
 def list_incidents(
     concert_id: int | None = None,
-    service: IncidentService = Depends(get_incident_service),
+    query: ListIncidentsQuery = Depends(
+        get_list_incidents_query
+    ),
 ):
-    return service.list_incidents(concert_id)
+    return query.execute(concert_id)

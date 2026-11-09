@@ -1,6 +1,6 @@
 
 from app.domain.concert import Concert as DomainConcert
-from app.models import Concert as ConcertModel
+from app.adapters.outbound.persistence.sqlalchemy.models import Concert as ConcertModel
 
 
 def to_domain(model: ConcertModel) -> DomainConcert:

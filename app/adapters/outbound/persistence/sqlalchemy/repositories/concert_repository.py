@@ -1,10 +1,10 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import Concert as ConcertModel
+from app.adapters.outbound.persistence.sqlalchemy.models import Concert as ConcertModel
 from app.domain.concert import Concert as DomainConcert
 from app.application.ports.outbound.concert_repository_port import ConcertRepositoryPort
-from app.infrastructure.mappers.concert_mapper import (
+from app.adapters.outbound.persistence.sqlalchemy.mappings import (
     to_domain,
     to_model,
     update_model,

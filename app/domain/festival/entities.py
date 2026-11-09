@@ -20,13 +20,16 @@ class Festival:
 
     @property
     def period(self) -> FestivalPeriod:
-        return FestivalPeriod(self.start_date, self.end_date)
+        return FestivalPeriod(
+            self.start_date,
+            self.end_date,
+        )
 
     def ensure_editable(self) -> None:
         if self.status == "published":
             raise ValueError(
                 "Impossible de modifier le planning : "
-                "le planning est dÃ©jÃ  publiÃ©"
+                "le planning est déjà publié"
             )
 
     def publish(self) -> None:
@@ -45,7 +48,7 @@ class Stage:
     def __post_init__(self):
         if self.capacity <= 0:
             raise ValueError(
-                "La capacitÃ© de la scÃ¨ne doit Ãªtre positive"
+                "La capacité de la scène doit être positive"
             )
 
     def supports(self, required_equipment: str) -> bool:
@@ -70,20 +73,26 @@ class Concert:
     status: str = "scheduled"
 
     def __post_init__(self):
-        TimeSlot(self.start_time, self.end_time)
+        TimeSlot(
+            self.start_time,
+            self.end_time,
+        )
 
     @property
     def time_slot(self) -> TimeSlot:
-        return TimeSlot(self.start_time, self.end_time)
+        return TimeSlot(
+            self.start_time,
+            self.end_time,
+        )
 
     def reschedule(
         self,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> None:
         if self.status == "cancelled":
             raise ValueError(
-                "Impossible de dÃ©placer un concert annulÃ©"
+                "Impossible de déplacer un concert annulé"
             )
 
         TimeSlot(start_time, end_time)
@@ -94,7 +103,7 @@ class Concert:
     def cancel(self) -> None:
         if self.status == "cancelled":
             raise ValueError(
-                "Le concert est dÃ©jÃ  annulÃ©"
+                "Le concert est déjà annulé"
             )
 
         self.status = "cancelled"

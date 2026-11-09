@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import Incident
+from app.adapters.outbound.persistence.sqlalchemy.models import Incident
 from app.application.ports.outbound.incident_repository_port import (
     IncidentData,
     IncidentRepositoryPort,

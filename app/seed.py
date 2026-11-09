@@ -1,6 +1,6 @@
 from datetime import datetime
-from app.database import Base,SessionLocal,engine
-from app.models import Festival,Artist,Stage,Concert,Incident
+from app.adapters.outbound.persistence.sqlalchemy.database import Base,SessionLocal,engine
+from app.adapters.outbound.persistence.sqlalchemy.models import Festival,Artist,Stage,Concert,Incident
 
 Base.metadata.create_all(bind=engine)
 

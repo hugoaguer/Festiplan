@@ -1,9 +1,22 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.schemas import StageCreate, StageRead
-from app.services.stage_service import StageService
-from app.api.dependencies import get_stage_service
+from app.adapters.inbound.web.schemas.schemas import (
+    StageCreate,
+    StageRead,
+)
+
+from app.application.use_cases.create_stage import (
+    CreateStageUseCase,
+)
+from app.application.queries.list_stages import (
+    ListStagesQuery,
+)
+
+from app.bootstrap.container import (
+    get_create_stage_use_case,
+    get_list_stages_query,
+)
 
 
 router = APIRouter(prefix="/stages", tags=["stages"])
@@ -26,21 +39,31 @@ def out(stage):
 @router.get("", response_model=list[StageRead])
 def list_stages(
     festival_id: int,
-    service: StageService = Depends(get_stage_service),
+    query: ListStagesQuery = Depends(get_list_stages_query),
 ):
     return [
         out(stage)
-        for stage in service.list_stages(festival_id)
+        for stage in query.execute(festival_id)
     ]
 
 
 @router.post("", response_model=StageRead, status_code=201)
 def create_stage(
     payload: StageCreate,
-    service: StageService = Depends(get_stage_service),
+    use_case: CreateStageUseCase = Depends(
+        get_create_stage_use_case
+    ),
 ):
     try:
-        return out(service.create_stage(payload))
+        stage = use_case.execute(
+            festival_id=payload.festival_id,
+            name=payload.name,
+            capacity=payload.capacity,
+            available_equipment=payload.available_equipment,
+        )
+
+        return out(stage)
+
     except ValueError as exc:
         raise HTTPException(
             status_code=400,

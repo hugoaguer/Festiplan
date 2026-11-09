@@ -2,8 +2,8 @@
 from datetime import datetime
 
 from app.domain.concert import Concert as DomainConcert
-from app.models import Concert as ConcertModel
-from app.repositories.concert_repository import ConcertRepository
+from app.adapters.outbound.persistence.sqlalchemy.models import Concert as ConcertModel
+from app.adapters.outbound.persistence.sqlalchemy.repositories.concert_repository import ConcertRepository
 
 # RÃ©utiliser les fixtures du fichier de rÃ©gression
 from tests.test_regression import db, festival_data  # noqa: F401

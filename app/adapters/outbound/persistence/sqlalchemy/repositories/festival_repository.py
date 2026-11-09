@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import Festival
+from app.adapters.outbound.persistence.sqlalchemy.models import Festival
 from app.application.ports.outbound.festival_repository_port import FestivalRepositoryPort
 
 

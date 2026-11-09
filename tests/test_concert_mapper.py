@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from app.domain.concert import Concert as DomainConcert
-from app.infrastructure.mappers.concert_mapper import (
+from app.adapters.outbound.persistence.sqlalchemy.mappings import (
     to_domain,
     to_model,
     update_model,

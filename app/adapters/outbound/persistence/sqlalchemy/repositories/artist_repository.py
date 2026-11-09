@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import Artist
+from app.adapters.outbound.persistence.sqlalchemy.models import Artist
 from app.application.ports.outbound.artist_repository_port import ArtistRepositoryPort
 
 
