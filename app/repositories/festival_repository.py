@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 
 from app.models import Festival
-from app.application.ports.festival_repository_port import FestivalRepositoryPort
+from app.application.ports.outbound.festival_repository_port import FestivalRepositoryPort
 
 
 class FestivalRepository(FestivalRepositoryPort):
@@ -24,8 +24,23 @@ class FestivalRepository(FestivalRepositoryPort):
             .first()
         )
 
-    def create(self, item):
+    def create(self, data):
+        festival = Festival(
+            name=data["name"],
+            location=data["location"],
+            start_date=data["start_date"],
+            end_date=data["end_date"],
+        )
+
+        self.db.add(festival)
+        self.db.commit()
+        self.db.refresh(festival)
+
+        return festival
+
+    def save(self, item):
         self.db.add(item)
         self.db.commit()
         self.db.refresh(item)
+
         return item

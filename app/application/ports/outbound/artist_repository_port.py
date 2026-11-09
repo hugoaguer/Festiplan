@@ -2,7 +2,7 @@
 from typing import Protocol, Any
 
 
-class FestivalRepositoryPort(Protocol):
+class ArtistRepositoryPort(Protocol):
 
     def list(self) -> list[Any]:
         ...

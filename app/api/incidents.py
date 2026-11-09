@@ -1,23 +1,35 @@
-from fastapi import APIRouter,Depends,HTTPException
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.models import Incident,Concert
-from app.schemas import IncidentCreate,IncidentRead
 
-router=APIRouter(prefix="/incidents",tags=["incidents"])
+from fastapi import APIRouter, Depends, HTTPException
 
-@router.post("",response_model=IncidentRead,status_code=201)
-def create_incident(payload:IncidentCreate,db:Session=Depends(get_db)):
-    if db.query(Concert).filter(Concert.id==payload.concert_id).first() is None: 
-        raise HTTPException(status_code=404,detail="Concert introuvable")
-    row=Incident(concert_id=payload.concert_id,
-                 description=payload.description,
-                 occurred_at=payload.occurred_at)
-    db.add(row); db.commit(); db.refresh(row); return row
+from app.schemas import IncidentCreate, IncidentRead
+from app.services.incident_service import IncidentService
+from app.api.dependencies import get_incident_service
 
-@router.get("",response_model=list[IncidentRead])
-def list_incidents(concert_id:int|None=None,db:Session=Depends(get_db)):
-    q=db.query(Incident)
-    if concert_id is not None:
-        q=q.filter(Incident.concert_id==concert_id)
-    return q.order_by(Incident.occurred_at.desc()).all()
+
+router = APIRouter(prefix="/incidents", tags=["incidents"])
+
+
+@router.post("", response_model=IncidentRead, status_code=201)
+def create_incident(
+    payload: IncidentCreate,
+    service: IncidentService = Depends(get_incident_service),
+):
+    try:
+        return service.create_incident(
+            concert_id=payload.concert_id,
+            description=payload.description,
+            occurred_at=payload.occurred_at,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get("", response_model=list[IncidentRead])
+def list_incidents(
+    concert_id: int | None = None,
+    service: IncidentService = Depends(get_incident_service),
+):
+    return service.list_incidents(concert_id)

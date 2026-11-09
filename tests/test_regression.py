@@ -6,6 +6,10 @@ import pytest
 
 from app.database import SessionLocal
 from app.models import Festival, Artist, Stage, Concert
+from app.repositories.artist_repository import ArtistRepository
+from app.repositories.concert_repository import ConcertRepository
+from app.repositories.festival_repository import FestivalRepository
+from app.repositories.stage_repository import StageRepository
 from app.services.scheduling_service import SchedulingService
 from app.services.publication_service import PublicationService
 from app.schemas import ConcertReschedule
@@ -98,7 +102,7 @@ def test_concert_overlap_is_rejected(db, festival_data):
         end_time=datetime(2026, 7, 10, 15, 30)
     )
 
-    with pytest.raises(ValueError, match="scène"):
+    with pytest.raises(ValueError, match="scÃ¨ne"):
         service.reschedule_concert(
             festival_data["concert2_id"], payload
         )
@@ -135,7 +139,12 @@ def test_notification_failure_does_not_cancel_change(db, festival_data):
 
 
 def test_published_schedule_cannot_be_modified(db, festival_data):
-    publication = PublicationService(db)
+    publication = PublicationService(
+        festival_repo=FestivalRepository(db),
+        concert_repo=ConcertRepository(db),
+        artist_repo=ArtistRepository(db),
+        stage_repo=StageRepository(db),
+    )
 
     with patch.object(
         publication.notifications,
@@ -150,7 +159,7 @@ def test_published_schedule_cannot_be_modified(db, festival_data):
         end_time=datetime(2026, 7, 10, 19)
     )
 
-    with pytest.raises(ValueError, match="publié"):
+    with pytest.raises(ValueError, match="publiÃ©"):
         service.reschedule_concert(
             festival_data["concert2_id"], payload
         )

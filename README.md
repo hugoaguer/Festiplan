@@ -1,6 +1,6 @@
-# FestiPlan — dépôt initial (legacy)
+# FestiPlan
 
-API pédagogique FastAPI de gestion d'un festival metal fictif. Le dépôt est volontairement imparfait : règles métier dispersées, dépendances techniques accessibles depuis plusieurs couches, et effets secondaires couplés aux opérations métier. Il ne doit pas être utilisé en production.
+API pédagogique FastAPI de gestion d'un festival metal fictif. Le code sépare les routes, les services/cas d'usage, les ports de repository et les repositories SQLAlchemy. Les règles de programmation des concerts sont regroupées dans le domaine, avec un mapper dédié entre le modèle métier et le modèle de persistance. Le projet reste un exemple pédagogique et ne doit pas être utilisé en production.
 
 ## Fonctionnalités
 - Festivals, artistes, scènes et concerts
@@ -24,9 +24,10 @@ Par défaut, SQLite crée `festiplan.db` dans le dossier courant. Copier `.env.e
 ## Données
 Festival fictif **Hellforge Open Air**, du 18 au 20 juin 2027. Scènes : Mainstage, Warzone, Valley et Temple. Les groupes, horaires et capacités sont inventés ; seule l'ambiance générale est inspirée des festivals metal multi-scènes.
 
-## Scénarios à explorer
-1. Déplacer un concert sur un créneau occupé sur la même scène : la validation est incomplète dans le parcours de déplacement.
-2. Définir `FESTIPLAN_FAIL_NOTIFICATIONS=true`, déplacer un concert, puis consulter son créneau : l'API peut répondre 500 alors que le déplacement est déjà enregistré.
-3. Publier le festival puis déplacer un concert par l'endpoint ordinaire : le statut publié n'est pas protégé.
+## Garanties métier
+- Les conflits de créneaux, la période du festival, l'équipement requis et l'état de publication sont vérifiés lors de la création, du déplacement et de la publication d'un planning.
+- Un échec de notification est journalisé sans annuler une modification déjà enregistrée.
+- Un planning publié ne peut plus être modifié par les opérations ordinaires.
+- La création d'un incident vérifie l'existence du concert ; son horodatage est renseigné par défaut s'il n'est pas fourni.
 
-Le dépôt contient des tests volontairement sommaires de validation. Les scénarios métier ci-dessus ne sont pas couverts complètement au départ : ils sont à investiguer et à sécuriser pendant la refactorisation.
+Les tests couvrent les règles du domaine, le mapping et le repository des concerts, les parcours API et les régressions métier.

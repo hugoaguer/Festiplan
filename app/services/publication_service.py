@@ -1,11 +1,12 @@
 
 import logging
 
-from sqlalchemy.orm import Session
-
-from app.models import Festival
+from app.application.use_cases.publish_festival import PublishFestivalUseCase
+from app.application.ports.outbound.artist_repository_port import ArtistRepositoryPort
+from app.application.ports.outbound.concert_repository_port import ConcertRepositoryPort
+from app.application.ports.outbound.festival_repository_port import FestivalRepositoryPort
+from app.application.ports.outbound.stage_repository_port import StageRepositoryPort
 from app.services.notification_service import NotificationService
-from app.services.scheduling_service import SchedulingService
 
 
 logger = logging.getLogger(__name__)
@@ -13,56 +14,46 @@ logger = logging.getLogger(__name__)
 
 class PublicationService:
 
-    def __init__(self, db: Session):
-        self.db = db
-        self.notifications = NotificationService()
-        self.scheduling = SchedulingService(db)
+    def __init__(
+        self,
+        festival_repo: FestivalRepositoryPort,
+        concert_repo: ConcertRepositoryPort,
+        artist_repo: ArtistRepositoryPort,
+        stage_repo: StageRepositoryPort,
+        notifications: NotificationService | None = None,
+    ):
+        self.festival_repo = festival_repo
+        self.concert_repo = concert_repo
+        self.artist_repo = artist_repo
+        self.stage_repo = stage_repo
+        self.notifications = (
+            notifications if notifications is not None
+            else NotificationService()
+        )
 
     def publish(self, festival_id):
-        festival = (
-            self.db.query(Festival)
-            .filter(Festival.id == festival_id)
-            .first()
+        use_case = PublishFestivalUseCase(
+            festival_repo=self.festival_repo,
+            concert_repo=self.concert_repo,
+            artist_repo=self.artist_repo,
+            stage_repo=self.stage_repo,
         )
+
+        festival = use_case.execute(festival_id)
 
         if festival is None:
             return None
 
-        if festival.status == "published":
-            raise ValueError("Le planning est déjà publié")
-
-        # Vérifier tous les concerts avant publication
-        concerts = self.scheduling.list_concerts(festival_id)
-
-        for concert in concerts:
-            if concert.status == "cancelled":
-                continue
-
-            self.scheduling._validate_concert(
-                concert.festival_id,
-                concert.artist_id,
-                concert.stage_id,
-                concert.start_time,
-                concert.end_time,
-                exclude_id=concert.id
-            )
-
-        # Publier uniquement si les vérifications sont réussies
-        festival.status = "published"
-
-        self.db.commit()
-        self.db.refresh(festival)
-
-        # La notification est secondaire
         try:
             self.notifications.notify_schedule_change(
                 festival_id,
-                f"Le planning du festival {festival.name} a été publié."
+                f"Le planning du festival {festival.name} a Ã©tÃ© publiÃ©."
             )
+
         except Exception:
             logger.exception(
-                "Échec de notification du festival %s",
-                festival_id
+                "Ã‰chec de notification du festival %s",
+                festival_id,
             )
 
         return festival
