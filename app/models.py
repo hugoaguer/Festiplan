@@ -1,8 +1,13 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 from app.domain.entities import FestivalStatus
+
+
+def _utc_now_naive() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
+
 
 class Festival(Base):
     __tablename__="festivals"
@@ -52,5 +57,5 @@ class Incident(Base):
     id: Mapped[int]=mapped_column(Integer,primary_key=True,index=True)
     concert_id: Mapped[int]=mapped_column(ForeignKey("concerts.id"),nullable=False)
     description: Mapped[str]=mapped_column(Text,nullable=False)
-    occurred_at: Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow,nullable=False)
+    occurred_at: Mapped[datetime]=mapped_column(DateTime,default=_utc_now_naive,nullable=False)
     resolved: Mapped[bool]=mapped_column(Boolean,default=False,nullable=False)
